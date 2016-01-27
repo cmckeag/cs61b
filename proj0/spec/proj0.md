@@ -29,9 +29,11 @@ To do this, head to the folder containing your copy of your repository. For exam
 
 If you're working solo, you should now be in your personal repo folder, e.g. `agz`. If you're working with a partner, your computers should both be in the `bqd-aba` folder that was created when you cloned the repo.
 
-Now we'll make sure you have the latest copy of the skeleton files with by using `git pull skeleton master`. If the folder you're pulling into already has an older copy of the skeleton repo (from lab 1, for example), this will cause a so-called `merge` (see git guide for more details if you want). A text editor will automatically open asking you to provide a message on why you are merging.
+Now we'll make sure you have the latest copy of the skeleton files with by using `git pull skeleton master`. If you're using your partner repo, you'll also need to set the remote just like we did in lab1 using the `git remote add skeleton https://github.com/Berkeley-CS61B/skeleton-sp16.git` command.
 
-Depending on what computer you're using, you will possibly yourself in one of two obtuse text editors:
+If the folder you're pulling into already has an older copy of the skeleton repo (from lab 1, for example), this will cause a so-called `merge` (see git guide for more details if you want). A text editor will automatically open asking you to provide a message on why you are merging.
+
+Depending on what computer you're using, you will possibly find yourself in one of two obtuse text editors:
   - vim
   - emacs
 
@@ -192,6 +194,8 @@ Hint 2: Always try googling before asking questions on Piazza. Knowing how to fi
 #### calcForceExertedBy
 
 The next method that you will implement is `calcForceExertedBy`. The `calcForceExertedBy` method takes in a planet, and returns a double describing the force exerted on this planet by the given planet.  You should be calling the `calcDistance` method in this method. For example `samh.calcForceExertedBy(rocinante)` for the numbers in "Double Check Your Understanding" return 1.334 * 10<sup>-9</sup>.
+<p class="redtext">NOTE: Do not use Math.abs to fix sign issues with these methods. This will
+cause issues later when drawing planets.</p>
 
 Once you've finished `calcForceExertedBy`, re-compile and run the next unit test.
 
@@ -334,9 +338,9 @@ Create a `main` method in the NBody class. Write code so that your NBody class p
 
 After your main method has read everything from the files, it's time to get drawing. First, set the scale so that it matches the radius of the universe. Then draw the image `starfield.jpg` as the background. To do these, you'll need to figure out how to use the StdDraw library.
 
-See StdDraw.java in the examples folder for a demonstration of StdDraw. This example, like InDemo, does not perfectly match what you're doing.
+See StdDrawDemo.java in the examples folder for a demonstration of StdDraw. This example, like InDemo, does not perfectly match what you're doing.
 
-In addition, make sure to check out [the StdDraw section of this mini-tutorial](http://introcs.cs.princeton.edu/java/15inout/), and if you're feeling bold, the [full StdDraw ocumentation](http://introcs.cs.princeton.edu/java/stdlib/javadoc/). This will probably take some trial and error. This may seem slightly frustrating, but it's good practice!
+In addition, make sure to check out [the StdDraw section of this mini-tutorial](http://introcs.cs.princeton.edu/java/15inout/), and if you're feeling bold, the [full StdDraw documentation](http://introcs.cs.princeton.edu/java/stdlib/javadoc/). This will probably take some trial and error. This may seem slightly frustrating, but it's good practice!
 
 #### Drawing One Planet
 
@@ -408,7 +412,7 @@ This isn't all that exciting (which is why we've provided a solution), but we'll
 Submission
 ----------
 
-Submit NBody.java and Planet.java to gradescope. If you pass all the tests, you get all the points. Hoorah! You may submit as many times as you'd like. We'll start restricting the autograder on future projects. The grader will be running by 1/24.
+Submit NBody.java and Planet.java to gradescope. If you pass all the tests, you get all the points. Hoorah! You may submit as many times as you'd like. We'll start restricting the autograder on future projects. The grader will be running by 1/24. Update: Sorry, due to some tecnical issues it'll actually be late 1/25.
 
 Feel free to share your own custom universes on Piazza. Make sure to try out the other examples in the data folder!
 
@@ -432,9 +436,102 @@ Frequently Asked Questions
 
 Look at the way you're calculating the force exerted on a particular planet in one time step.  Make sure that the force doesn't include forces that were exerted in past time steps.
 
+#### When I run the simulation, my planets start rotating, but then quickly accelerate and disappear of of the bottom left of the screen.
+
+Make sure you did not use <code>Math.abs(...)</code> when calculating <code>calcForceExertedByX(...)</code> and
+<code>calcForceExertedByY(...)</code>.
+
 #### Why'd you name the class Planet? The sun isn't a Planet.
 
 You got us. We could have used Body, but we didn't. Maybe next time?
+
+#### What is a constructor? How do I write one?
+
+A constructor is a block of code that runs when a class is instantiated with the <code>new</code> keyword. Constructors serve the purpose of initializing a new object's fields. Consider an example below:
+
+    public class Dog {
+
+        String _name;
+        String _breed;
+        int _age;
+
+        public Dog(String name, String breed, int age) {
+            _name = name;
+            _breed = breed;
+            _age = age;
+        }
+    }
+
+The <code>Dog</code> class has three non-static fields. Each instance of the <code>Dog</code> class can have a name, a breed, and an age. Our simple constructor, which takes three arguments, initializes these fields for all new <code>Dog</code> objects.
+
+#### I'm having trouble with the second Planet constructor, the one that takes in another Planet as its only argument.
+
+Let's walk through an example of how a constructor works.  Suppose you use the `Dog` constructor above to create a new `Dog`:
+
+	Dog fido = new Dog("Fido", "Poodle", 1);
+
+When this line of code gets executed, the JVM first creates a new `Dog` object that's empty.  In essence, the JVM is creating a "box" for the `Dog`, and that box is big enough to hold a box for each of the `Dog`'s declared instance variables.  This all happens before the constructor is executed.  At this point, here's how you can think about what our new fluffy friend `fido` looks like (note that this is a simplification! We'll learn about a more correct view of this when we learn about Objects and pointers later this semester):
+
+![constructor1](constructor1.png)
+
+Java will put some default values in each instance variable.  We'll learn more about where these defaults come from (and what `null` means) later this semester.  For now, just remember that there's space for all of the instance variables, but those instance variables haven't been assigned meaningful values yet.  If you ever want to see this in action, you can add some print statements to your constructor:
+
+    public Dog(String name, String breed, int age) {
+        System.out.println("_name: " + _name + ", _breed: " + _breed + ", _age: " + _age);
+        _name = name;
+        _breed = breed;
+        _age = age;
+    }
+
+If this constructor had been used to create `fido` above, it would have printed:
+
+    _name: null, _breed: null, _age: 0
+
+OK, back to making `fido`.  Now that the JVM has made some "boxes" for `fido`, it calls the `Dog` constructor function that we wrote.  At this point, the constructor executes just like any other function would.  In the first line of the constructor, `_name` is assigned the value `name`, so that `fido` looks like:
+
+![constructor2](constructor2.png)
+
+When the constructor completes, `fido` looks like:
+
+![constructor3](constructor3.png)
+
+Now, suppose you want to create a new `Dog` constructor that handles cross-breeding.  You want the new constructor to accept a name, an age, and two breeds, and create a new `Dog` that is a mixture of the two breeds.  Your first guess for how to make this constructor might look something like this:
+
+	public Dog(String name, String breed1, String breed2, int age) {
+	    Dog dog = new Dog(name, breed1 + breed2, age);
+	}
+
+However, if you try to create a new `Dog` using this constructor:
+
+    Dog tommy = new Dog("Tommy", "Poodle", "Golden Retriever", 1);
+
+This won't do what you want!  As above, the first thing that happens is that the JVM creates empty "boxes" for each of `tommy`'s instance variables:
+
+![constructor4](constructor4.png)
+
+But then when the 4-argument constructor got called, it created a second `Dog` and assigned it to the variable `dog`.  It didn't change any of `tommy`'s instance variables.  Here's how the world looks after the line in our new constructor finishes:
+
+![constructor5](constructor5.png)
+
+`dog` isn't visible outside of the constructor method, so when the constructor completes, `dog` will be destroyed by the garbage collector (more on this later!) and all we'll have is the still un-initialized `tommy` variable.
+
+Here's a cross-breed constructor that works in the way we'd like:
+
+	public Dog(String name, String breed1, String breed2, int age) {
+	    Dog(name, breed1 + breed2, age);
+	}
+
+Here, we're calling the old 3-argument constructor on `this`; rather than creating a new `Dog`, we're using the 3-argument constructor to fill in all of the instance variables on this dog.  After calling this new constructor to create `tommy`, `tommy` will correctly be initialized to:
+
+![constructor6](constructor6.png)
+
+We could have also written a new constructor that assigned each instance variable directly, rather than calling the existing constructor:
+
+        public Dog(String name, String breed1, String breed2, int age) {
+            _name = name;
+            _breed = breed1 + breed2;
+            _age = age;
+        }
 
 <!--
 (ABANDONED TEXT)
