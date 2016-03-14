@@ -8,7 +8,7 @@ After you've completed your implementation, you'll compare the performance of yo
 1: BSTMap
 =======
 
-Create a class **BSTMap** that implements the **Map61B** interface using a BST (Binary Search Tree) as its core data structure. You must do this in a file named `BSTMap.java`. Your implementation is required to implement all of the methods given in **Map61B** *except* for `remove` and `keyset`. For these methods you should throw an `UnsupportedOperationException`.
+Create a class **BSTMap** that implements the **Map61B** interface using a BST (Binary Search Tree) as its core data structure. You must do this in a file named `BSTMap.java`. Your implementation is required to implement all of the methods given in **Map61B** *except* for `remove`, `iterator` and `keyset`. For these methods you should throw an `UnsupportedOperationException`.
 
 In your implementation you should assume that generic keys K in `BSTMap<K,V>` extend [Comparable<K>](http://docs.oracle.com/javase/7/docs/api/java/lang/Comparable.html). In other words, your class should be defined as `public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V>`.
 
@@ -42,7 +42,7 @@ Extra: Modify the testing classes so that they also compare the performance of y
 
 This will not be graded. 
 
-Implement the methods `remove(K key)`, `remove(K key, V value)`, and `keySet()` in your **BSTMap** class. Implementing `remove()` is fairly challenging.
+Implement the methods `iterator()`, `keySet()`, `remove(K key)`, and `remove(K key, V value)`, in your **BSTMap** class. Implementing `remove()` is fairly challenging. For an extra challenge implement `keySet()` and `iterator` without using a second instance variable to store the set of keys.
 
 For `remove`, you should return null if the argument key does not exist in the **BSTMap**. 
 Otherwise, delete the key-value pair (key, value) and return value.
@@ -53,7 +53,7 @@ Given `B`, a **BSTMap** with `N` key-value pairs, and `(K, V)`, a random key-val
 
 Unless otherwise stated, "big-Oh" bounds (e.g. `O(N)`) and "big-Theta" bounds (e.g. &Theta;(`N`)) refer to the **number of comparisons** in the given method call(s). 
 
-Questions:
+For questions 1-7, state whether the statement is true or false. For question 8, give a runtime bound.
 
 1. `B.put(K, V)` &isin; O(log(`N`)).
 2. `B.put(K, V)` &isin; &Theta;(log(`N`)).
