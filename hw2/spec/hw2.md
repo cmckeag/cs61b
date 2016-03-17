@@ -140,7 +140,11 @@ The program should behave as in this movie and the following snapshots when used
 Submission
 --------------------------------
 
-Submit a zip file containing `hw2/Percolation.java` (using the weighted quick-union algorithm from `WeightedQuickUnionUF`) and `hw2/PercolationStats.java`. You do not need to submit any other files.
+Submit a zip file containing just the folder for your hw2 package, similar to what you've done in previous labs, e.g. [lab 6](http://cs61b.ug/sp16/materials/lab/lab6/lab6.html). Your zip file must contain `hw2/Percolation.java` (using the weighted quick-union algorithm from `WeightedQuickUnionUF`) and `hw2/PercolationStats.java`. You do not need to submit any other files.
+
+For example:
+
+![submission](images/submission.png)
 
 FAQ
 --------------------------------
@@ -168,9 +172,15 @@ The issue is that you're using the same random seed for multiple simulations, an
  
 If you look at the code for StdRandom, you'll see that it sets the seed just once (the first time StdRandom is used), which prevents this issue of seed reset. In short, don't set the seed yourself.
 
+Alternately, make sure you're not generating biased random numbers. You should be using the StdRandom method that generates integers, not doubles.
+
 #### It's telling me that my code reports "false" for percolates() but when I run the visualizer I'm getting true!
 
 The visualizer does a very specific sequence of isOpen/isFull/percolates() calls. Try creating your own test that only opens sites and then calls percolates(). Alternately, disable all isOpen and/or isFull calls in the visualizer so you can focus on the percolates() behavior. Alternately, pay close attention to the test labeled `Random Operation Order`.
+
+#### My code is compiling on my computer but not on the autograder.
+
+Your code must obey the API exactly. You may not add additional public methods or variables to the Percolation class. When we test your PercolationStats, we use a reference version of Percolation instead of your version to avoid cascading errors -- which means you can't assume that any additional public methods are available.
 
 Credits
 ----------------
