@@ -31,10 +31,12 @@ public class ResizeAllen extends Application {
         // Make an image of Allen.
         final Image allenImage = new Image("allen2.jpg");
         final ImageView allenView = new ImageView(allenImage);
+        // sizes the image
         allenView.setFitHeight(getDimensionInsideMargin(WINDOW_HEIGHT));
         allenView.setFitWidth(getDimensionInsideMargin(WINDOW_WIDTH));
         allenView.setX(MARGIN);
         allenView.setY(MARGIN);
+        // puts the image in the scene
         root.getChildren().add(allenView);
 
         // Register listeners that resize Allen when the window is re-sized.
@@ -70,6 +72,7 @@ public class ResizeAllen extends Application {
     }
 
     public static void main(String[] args) {
+        System.out.println("Launching...");
         launch(args);
     }
 }

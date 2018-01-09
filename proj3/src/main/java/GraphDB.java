@@ -6,27 +6,31 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
+import java.util.HashMap;
+
 /**
  * Wraps the parsing functionality of the MapDBHandler as an example.
  * You may choose to add to the functionality of this class if you wish.
  * @author Alan Yao
  */
 public class GraphDB {
+    private HashMap<Long, MPoint> nodes;
     /**
      * Example constructor shows how to create and start an XML parser.
-     * @param db_path Path to the XML file to be parsed.
+     * @param dbpath Path to the XML file to be parsed.
      */
-    public GraphDB(String db_path) {
+    public GraphDB(String dbpath) {
         try {
-            File inputFile = new File(db_path);
+            File inputFile = new File(dbpath);
             SAXParserFactory factory = SAXParserFactory.newInstance();
             SAXParser saxParser = factory.newSAXParser();
             MapDBHandler maphandler = new MapDBHandler(this);
             saxParser.parse(inputFile, maphandler);
+            maphandler.clean();
+            nodes = maphandler.nodes();
         } catch (ParserConfigurationException | SAXException | IOException e) {
             e.printStackTrace();
         }
-        clean();
     }
 
     /**
@@ -44,5 +48,10 @@ public class GraphDB {
      *  we can reasonably assume this since typically roads are connected.
      */
     private void clean() {
+        System.out.println("clean(graphdb) requested");
+    }
+
+    public HashMap<Long, MPoint> getNodes() {
+        return nodes;
     }
 }

@@ -1,0 +1,3 @@
+String Length | # Strings Entered | ULL Time | BSTMap Time | TreeMap Time
+      10      |          50       | 0.00 sec |   0.00 sec  |   0.00 sec 
+      10      |       10000       | 0.43 sec |   0.02 sec  |   0.01 sec

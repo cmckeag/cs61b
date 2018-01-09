@@ -19,10 +19,26 @@ public class TestSimpleOomage {
 
     @Test
     public void testHashCodePerfect() {
-        /* TODO: Write a test that ensures the hashCode is perfect,
-          meaning no two SimpleOomages should EVER have the same
-          hashCode!
-         */
+        Set<Integer> sixteenMillion = new HashSet<Integer>(16777216);
+        int r = 0;
+        int g = 0;
+        int b = 0;
+        boolean containedDuplicate = false;
+        while (r < 256) {
+            while (g < 256) {
+                while (b < 256) {
+                    SimpleOomage lmao = new SimpleOomage(r, g, b);
+                    containedDuplicate = !sixteenMillion.add(lmao.hashCode());
+                    if (containedDuplicate) {
+                        break;
+                    }
+                    b += 1;
+                }
+                g += 1;
+            }
+            r += 1;
+        }
+        assertTrue(!containedDuplicate);
     }
 
     @Test
@@ -36,14 +52,14 @@ public class TestSimpleOomage {
         assertNotEquals(ooA, "ketchup");
     }
 
-    /*@Test
+    @Test
     public void testHashCodeAndEqualsConsistency() {
         SimpleOomage ooA = new SimpleOomage(5, 10, 20);
         SimpleOomage ooA2 = new SimpleOomage(5, 10, 20);
         HashSet<SimpleOomage> hashSet = new HashSet<SimpleOomage>();
         hashSet.add(ooA);
         assertTrue(hashSet.contains(ooA2));
-    }*/
+    }
 
     /** Calls tests for SimpleOomage. */
     public static void main(String[] args) {

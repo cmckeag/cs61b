@@ -1,4 +1,5 @@
 import edu.princeton.cs.algs4.Queue;
+import java.util.Iterator;
 
 public class QuickSort {
     /**
@@ -47,13 +48,53 @@ public class QuickSort {
     private static <Item extends Comparable> void partition(
             Queue<Item> unsorted, Item pivot, Queue<Item> less,
             Queue<Item> equal, Queue<Item> greater) {
-        // Your code here!
+        Iterator<Item> iterator = unsorted.iterator();
+        while (iterator.hasNext()) {
+            Item inspect = iterator.next();
+            if (inspect.compareTo(pivot) < 0) {
+                less.enqueue(inspect);
+            } else if (inspect.compareTo(pivot) > 0) {
+                greater.enqueue(inspect);
+            } else {
+                equal.enqueue(pivot);
+            }
+        }
     }
 
     /** Returns a Queue that contains the given items sorted from least to greatest. */
     public static <Item extends Comparable> Queue<Item> quickSort(
             Queue<Item> items) {
-        // Your code here!
-        return items;
+        if (items.size() < 2) {
+            return items;
+        }
+        Queue<Item> less = new Queue<Item>();
+        Queue<Item> equal = new Queue<Item>();
+        Queue<Item> greater = new Queue<Item>();
+        Item pivot = getRandomItem(items);
+        partition(items, pivot, less, equal, greater);
+        Queue<Item> left = quickSort(less);
+        Queue<Item> right = quickSort(greater);
+        Queue<Item> result = catenate(catenate(left, equal), right);
+        return result;
+    }
+
+
+    public static void main(String[] args) {
+        Queue<String> q = new Queue<String>();
+        q.enqueue("agea");
+        q.enqueue("alexPan");
+        q.enqueue("koop");
+        q.enqueue("jolly_joshy");
+        q.enqueue("agur");
+        q.enqueue("workday");
+        q.enqueue("bruh");
+        q.enqueue("yung chicken");
+        Queue<String> s = QuickSort.quickSort(q);
+        while (!q.isEmpty()) {
+            System.out.println("q " + q.dequeue());
+        }
+        while (!s.isEmpty()) {
+            System.out.println("s " + s.dequeue());
+        }
     }
 }

@@ -8,6 +8,9 @@ import java.io.ObjectInputStream;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 
 public class AGMapServerTest {
     static List<TestParams> params;
@@ -23,7 +26,7 @@ public class AGMapServerTest {
     public void setUp() throws Exception {
         if (initialized) return;
         MapServer.initialize();
-        FileInputStream fis = new FileInputStream("test_ser_data");
+        FileInputStream fis = new FileInputStream("test_data_v2");
         ObjectInputStream ois = new ObjectInputStream(fis);
         params = (List<TestParams>) ois.readObject();
         ois.close();
@@ -56,6 +59,15 @@ public class AGMapServerTest {
             ByteArrayOutputStream os = new ByteArrayOutputStream();
             MapServer.getMapRaster(p.raster_params, os);
             byte[] student_output = os.toByteArray();
+            try {
+                File f = new File("output/raster_" + i + ".png");
+                FileOutputStream fos = new FileOutputStream(f);
+                fos.write(student_output);
+                fos.flush();
+                fos.close();
+            } catch (IOException e) {
+
+            }
             assertArrayEquals("Raw image output differed for input: " + p.raster_params + ".\n See " +
                     "example image " + i + ".\n", p.raster_output, student_output);
         }
@@ -102,9 +114,19 @@ public class AGMapServerTest {
             ByteArrayOutputStream os = new ByteArrayOutputStream();
             MapServer.getMapRaster(p.raster_params, os);
             byte[] student_output = os.toByteArray();
+            try {
+                File f = new File("output/route_" + i + ".png");
+                FileOutputStream fos = new FileOutputStream(f);
+                fos.write(student_output);
+                fos.flush();
+                fos.close();
+            } catch (IOException e) {
+
+            }
             assertArrayEquals("Raw image output differed for input: " + p.raster_params + "\nWith" +
                     " route params: " + p.route_params + ".\n See " +
                     "example image " + i + ".\n", p.route_raster, student_output);
+            System.out.println("Example " + i + " passed");
         }
     }
 

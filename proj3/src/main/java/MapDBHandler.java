@@ -2,9 +2,13 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
+import java.util.LinkedList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.ListIterator;
+import java.util.Iterator;
 
 /**
  *  Parses OSM XML files using an XML SAX parser. Used to construct the graph of roads for
@@ -29,7 +33,11 @@ public class MapDBHandler extends DefaultHandler {
                     "residential", "living_street", "motorway_link", "trunk_link", "primary_link",
                     "secondary_link", "tertiary_link"));
     private String activeState = "";
+    private boolean validHighway;
     private final GraphDB g;
+    private MPoint currentNode;
+    private HashMap<Long, MPoint> points = new HashMap<Long, MPoint>();
+    private LinkedList<MPoint> wayQ = new LinkedList<MPoint>();
 
     public MapDBHandler(GraphDB g) {
         this.g = g;
@@ -55,17 +63,27 @@ public class MapDBHandler extends DefaultHandler {
         /* Some example code on how you might begin to parse XML files. */
         if (qName.equals("node")) {
             activeState = "node";
+            handleNode(attributes);
         } else if (qName.equals("way")) {
             activeState = "way";
-//            System.out.println("Beginning a way...");
-        } else if (activeState.equals("way") && qName.equals("tag")) {
-            String k = attributes.getValue("k");
-            String v = attributes.getValue("v");
-//            System.out.println("Tag with k=" + k + ", v=" + v + ".");
-        } else if (activeState.equals("node") && qName.equals("tag") && attributes.getValue("k")
-                .equals("name")) {
-//            System.out.println("Node with name: " + attributes.getValue("v"));
+            validHighway = false;
+            wayQ.clear();
+        } else if (activeState.equals("way") && qName.equals("tag")
+                && attributes.getValue("k").equals("highway")
+                && ALLOWED_HIGHWAY_TYPES.contains(attributes.getValue("v"))) {
+            validHighway = true;
+        } else if (activeState.equals("way") && qName.equals("nd")) {
+            wayQ.addLast(points.get(Long.parseLong(attributes.getValue("ref"))));
+
         }
+    }
+
+    private void handleNode(Attributes attributes) {
+        long id = Long.parseLong(attributes.getValue("id"));
+        //System.out.println("Found a node with ID " + ID);
+        MPoint current = new MPoint(attributes);
+        points.put(id, current);
+        currentNode = current;
     }
 
     /**
@@ -81,9 +99,39 @@ public class MapDBHandler extends DefaultHandler {
      */
     @Override
     public void endElement(String uri, String localName, String qName) throws SAXException {
-        if (qName.equals("way")) {
-//            System.out.println("Finishing a way...");
+        if (qName.equals("way") && validHighway) {
+            ListIterator<MPoint> listit = wayQ.listIterator();
+            while (listit.hasNext()) {
+                MPoint working = listit.next();
+                if (listit.hasNext()) {
+                    working.addNeighbor(listit.next());
+                    listit.previous();
+                }
+            }
+            while (listit.hasPrevious()) {
+                MPoint working = listit.previous();
+                if (listit.hasPrevious()) {
+                    working.addNeighbor(listit.previous());
+                    listit.next();
+                }
+            }
+        } else if (qName.equals("way") && !validHighway) {
+            wayQ.clear();
         }
+    }
+
+    public void clean() {
+        Iterator<MPoint> iterator = points.values().iterator();
+        while (iterator.hasNext()) {
+            MPoint inspect = iterator.next();
+            if (inspect.getNeighbors().isEmpty()) {
+                iterator.remove();
+            }
+        }
+    }
+
+    public HashMap<Long, MPoint> nodes() {
+        return this.points;
     }
 
 }

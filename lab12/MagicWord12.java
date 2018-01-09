@@ -3,7 +3,7 @@ public class MagicWord12 {
         /* replace magicWord with the magic word or use "early"
         *  if you are submitting early */
 
-        String magicWord = "";
+        String magicWord = "early";
         return magicWord;
     }
 } 

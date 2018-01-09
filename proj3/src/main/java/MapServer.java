@@ -1,12 +1,23 @@
 import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.BasicStroke;
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
+import java.io.File;
+import java.io.IOException;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Iterator;
+import java.util.ListIterator;
+import java.util.PriorityQueue;
+import java.util.HashSet;
 
 /* Maven is used to pull in these dependencies. */
 import com.google.gson.Gson;
@@ -62,6 +73,10 @@ public class MapServer {
         "end_lat", "end_lon"};
     /* Define any static variables here. Do not define any instance variables of MapServer. */
     private static GraphDB g;
+    private static QuadTree quadTree;
+    private static LinkedList<Long> route;
+    private static LinkedList<Long> otherRoute = new LinkedList<>();
+
 
     /**
      * Place any initialization statements that will be run before the server main loop here.
@@ -69,6 +84,7 @@ public class MapServer {
      * This is for testing purposes, and you may fail tests otherwise.
      **/
     public static void initialize() {
+        quadTree = new QuadTree();
         g = new GraphDB(OSM_DB_PATH);
     }
 
@@ -107,7 +123,7 @@ public class MapServer {
         get("/route", (req, res) -> {
             HashMap<String, Double> params =
                     getRequestParams(req, REQUIRED_ROUTE_REQUEST_PARAMS);
-            LinkedList<Long> route = findAndSetRoute(params);
+            route = findAndSetRoute(params);
             return !route.isEmpty();
         });
 
@@ -166,7 +182,6 @@ public class MapServer {
         return params;
     }
 
-
     /**
      * Handles raster API calls, queries for tiles and rasters the full image. <br>
      * <p>
@@ -202,8 +217,100 @@ public class MapServer {
      * @see #REQUIRED_RASTER_REQUEST_PARAMS
      */
     public static Map<String, Object> getMapRaster(Map<String, Double> params, OutputStream os) {
-        HashMap<String, Object> rasteredImageParams = new HashMap<>();
+        HashMap<String, Object> rasteredImageParams = new HashMap<String, Object>();
+        Coordinates xNW = new Coordinates(params.get("ullon"), params.get("ullat"));
+        Coordinates xSE = new Coordinates(params.get("lrlon"), params.get("lrlat"));
+        double width = params.get("w");
+        double reqDPP = (params.get("lrlon") - params.get("ullon")) / width;
+        double currentDPP = (ROOT_LRLON - ROOT_ULLON) / 256.0;
+        double heightDPP = (ROOT_ULLAT - ROOT_LRLAT) / 256.0;
+        int depth = 0;
+        while (currentDPP > reqDPP && depth < 7) {
+            currentDPP = currentDPP / 2;
+            heightDPP = heightDPP / 2;
+            depth += 1;
+        }
+        LinkedList<Tile> rasterTiles = quadTree.getInQueryWindow(xNW, xSE, depth);
+        boolean querySuccess = !rasterTiles.isEmpty();
+        double rasterULLON = rasterTiles.peekFirst().getCorners().peekFirst().getX();
+        double rasterULLAT = rasterTiles.peekFirst().getCorners().peekFirst().getY();
+        double rasterLRLON = rasterTiles.peekLast().getCorners().peekLast().getX();
+        double rasterLRLAT = rasterTiles.peekLast().getCorners().peekLast().getY();
+        int tilesWidth = 0;
+        ListIterator<Tile> iterator = rasterTiles.listIterator();
+        double currentheight = rasterTiles.peekFirst().getCorners().peekFirst().getY();
+        while (iterator.hasNext() && iterator.next().getCorners().peekFirst().getY()
+                == currentheight) {
+            tilesWidth += 1;
+        }
+        int tilesHeight = 0;
+        if (tilesWidth > 0) {
+            tilesHeight = rasterTiles.size() / tilesWidth;
+        }
+        int rasterWidth = tilesWidth * 256;
+        int rasterHeight = tilesHeight * 256;
+        rasteredImageParams.put("raster_ul_lon", rasterULLON);
+        rasteredImageParams.put("raster_ul_lat", rasterULLAT);
+        rasteredImageParams.put("raster_lr_lon", rasterLRLON);
+        rasteredImageParams.put("raster_lr_lat", rasterLRLAT);
+        rasteredImageParams.put("raster_width", rasterWidth);
+        rasteredImageParams.put("raster_height", rasterHeight);
+        rasteredImageParams.put("depth", depth);
+        rasteredImageParams.put("query_success", querySuccess);
+        BufferedImage im = new BufferedImage(rasterWidth, rasterHeight, BufferedImage.TYPE_INT_RGB);
+        drawAll(rasterTiles, im, os, rasterWidth, new Coordinates(rasterULLON, rasterULLAT),
+                new Coordinates(rasterLRLON, rasterLRLAT), currentDPP, heightDPP);
         return rasteredImageParams;
+    }
+
+    private static void drawAll(LinkedList<Tile> tilesInput, BufferedImage im,
+                                OutputStream os, int rasterWidth, Coordinates rasterUL,
+                                Coordinates rasterLR, double currentDPP, double heightDPP) {
+        double rasterULLON = rasterUL.getX();
+        double rasterULLAT = rasterUL.getY();
+        double rasterLRLON = rasterLR.getX();
+        double rasterLRLAT = rasterLR.getY();
+        ListIterator<Tile> images = tilesInput.listIterator(0);
+        Graphics gr = im.getGraphics();
+        int x = 0;
+        int y = 0;
+        try {
+            while (images.hasNext()) {
+                Tile grabb = images.next();
+                File tileImage = new File(IMG_ROOT + grabb.getName() + ".png");
+                BufferedImage img = ImageIO.read(tileImage);
+                gr.drawImage(img, x, y, null);
+                x += 256;
+                if (x == rasterWidth) {
+                    x = 0;
+                    y += 256;
+                }
+            }
+            if (!otherRoute.isEmpty()) {
+                ((Graphics2D) gr).setStroke(new BasicStroke(MapServer.ROUTE_STROKE_WIDTH_PX,
+                        BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                gr.setColor(ROUTE_STROKE_COLOR);
+                ListIterator<Long> routetravel = otherRoute.listIterator();
+                while (routetravel.hasNext()) {
+                    Long inspectID = routetravel.next();
+                    MPoint startPoint = g.getNodes().get(inspectID);
+                    Coordinates startPixel = new Coordinates((startPoint.lon() - rasterULLON)
+                            / currentDPP, (rasterULLAT - startPoint.lat()) / heightDPP);
+                    if (routetravel.hasNext()) {
+                        Long nextID = routetravel.next();
+                        MPoint endPoint = g.getNodes().get(nextID);
+                        Coordinates endPixel = new Coordinates((endPoint.lon() - rasterULLON)
+                                / currentDPP, (rasterULLAT - endPoint.lat()) / heightDPP);
+                        gr.drawLine((int) startPixel.getX(), (int) startPixel.getY(),
+                                (int) endPixel.getX(), (int) endPixel.getY());
+                        routetravel.previous();
+                    }
+                }
+            }
+            ImageIO.write(im, "png", os);
+        } catch (IOException e) {
+            System.out.println("There was an error drawing the image");
+        }
     }
 
     /**
@@ -217,13 +324,86 @@ public class MapServer {
      * @return A LinkedList of node ids from the start of the route to the end.
      */
     public static LinkedList<Long> findAndSetRoute(Map<String, Double> params) {
-        return new LinkedList<>();
+        clearRoute();
+        HashMap<Long, MPoint> allNodes = g.getNodes();
+        MPoint[] startAndEndPoints = findStartAndEndNodes(params, allNodes);
+        MPoint start = startAndEndPoints[0];
+        MPoint destination = startAndEndPoints[1];
+        SearchNode base = new SearchNode(start, null, destination);
+        PriorityQueue<SearchNode> q = new PriorityQueue<>();
+        HashSet<Long> visited = new HashSet<>();
+        visited.add(base.current().getID());
+        q.add(base);
+        SearchNode result = solve(q, destination, visited);
+        LinkedList<Long> path = new LinkedList<>();
+        while (result.previous() != null) {
+            path.addFirst(result.current().getID());
+            result = result.previous();
+        }
+        path.addFirst(result.current().getID());
+        otherRoute = path;
+        return path;
+    }
+
+    private static SearchNode solve(PriorityQueue<SearchNode> q,
+                                    MPoint target, HashSet<Long> visited) {
+        SearchNode latest = q.poll();
+        while (!latest.isGoal()) {
+            for (MPoint m : latest.current().getNeighbors()) {
+                if (latest.previous() == null) {
+                    q.add(new SearchNode(m, latest, target));
+                } else if (!visited.contains(m.getID())) {
+                    q.add(new SearchNode(m, latest, target));
+                }
+            }
+            latest = q.poll();
+            visited.add(latest.current().getID());
+        }
+        return latest;
+    }
+
+    private static MPoint[] findStartAndEndNodes(Map<String, Double> params,
+                                                 HashMap<Long, MPoint> allNodes) {
+        double startx = params.get("start_lon");
+        double starty = params.get("start_lat");
+        double endx = params.get("end_lon");
+        double endy = params.get("end_lat");
+        double distanceFromStart = -1;
+        double distanceFromEnd = -1;
+        MPoint[] startAndEndPoints = new MPoint[2];
+        Iterator<MPoint> nodeIterator = allNodes.values().iterator();
+        startAndEndPoints[0] = new MPoint();
+        startAndEndPoints[1] = new MPoint();
+        while (nodeIterator.hasNext()) {
+            MPoint inspect = nodeIterator.next();
+            if (distanceFromStart < 0 || distanceFromEnd < 0) {
+                distanceFromStart = Math.sqrt(Math.pow(startx - inspect.lon(), 2)
+                        + Math.pow(starty - inspect.lat(), 2));
+                distanceFromEnd = Math.sqrt(Math.pow(endx - inspect.lon(), 2)
+                        + Math.pow(endy - inspect.lat(), 2));
+            } else {
+                if (Math.sqrt(Math.pow(startx - inspect.lon(), 2)
+                        + Math.pow(starty - inspect.lat(), 2)) < distanceFromStart) {
+                    distanceFromStart = Math.sqrt(Math.pow(startx - inspect.lon(), 2)
+                            + Math.pow(starty - inspect.lat(), 2));
+                    startAndEndPoints[0] = inspect;
+                }
+                if (Math.sqrt(Math.pow(endx - inspect.lon(), 2)
+                        + Math.pow(endy - inspect.lat(), 2)) < distanceFromEnd) {
+                    distanceFromEnd = Math.sqrt(Math.pow(endx - inspect.lon(), 2)
+                            + Math.pow(endy - inspect.lat(), 2));
+                    startAndEndPoints[1] = inspect;
+                }
+            }
+        }
+        return startAndEndPoints;
     }
 
     /**
      * Clear the current found route, if it exists.
      */
     public static void clearRoute() {
+        otherRoute.clear();
     }
 
     /**

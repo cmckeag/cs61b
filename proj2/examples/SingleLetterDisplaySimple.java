@@ -1,3 +1,5 @@
+// fuck you koop
+
 import javafx.application.Application;
 import javafx.event.EventHandler;
 import javafx.geometry.VPos;
@@ -40,6 +42,8 @@ public class SingleLetterDisplaySimple extends Application {
 
             // Initialize some empty text and add it to root so that it will be displayed.
             displayText = new Text(textCenterX, textCenterY, "");
+            Text first = new Text(100, 100, "hi");
+            first.setFont(Font.font(fontName, fontSize));
             // Always set the text origin to be VPos.TOP! Setting the origin to be VPos.TOP means
             // that when the text is assigned a y-position, that position corresponds to the
             // highest position across all letters (for example, the top of a letter like "I", as
@@ -63,6 +67,7 @@ public class SingleLetterDisplaySimple extends Application {
                     // Ignore control keys, which have non-zero length, as well as the backspace
                     // key, which is represented as a character of value = 8 on Windows.
                     displayText.setText(characterTyped);
+                    
                     keyEvent.consume();
                 }
 
@@ -108,13 +113,16 @@ public class SingleLetterDisplaySimple extends Application {
         Group root = new Group();
         // The Scene represents the window: its height and width will be the height and width
         // of the window displayed.
+
+        EventHandler<KeyEvent> keyEventHandler =
+                new KeyEventHandler(root, WINDOW_WIDTH, WINDOW_HEIGHT);
+                
         Scene scene = new Scene(root, WINDOW_WIDTH, WINDOW_HEIGHT, Color.WHITE);
 
         // To get information about what keys the user is pressing, create an EventHandler.
         // EventHandler subclasses must override the "handle" function, which will be called
         // by javafx.
-        EventHandler<KeyEvent> keyEventHandler =
-                new KeyEventHandler(root, WINDOW_WIDTH, WINDOW_HEIGHT);
+        
         // Register the event handler to be called for all KEY_PRESSED and KEY_TYPED events.
         scene.setOnKeyTyped(keyEventHandler);
         scene.setOnKeyPressed(keyEventHandler);

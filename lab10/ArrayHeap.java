@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.ListIterator;
 
 /**
  * A Generic heap class. Unlike Java's priority queue, this heap doesn't just
@@ -12,7 +13,14 @@ public class ArrayHeap<T> {
 	 * Inserts an item with the given priority value. This is enqueue, or offer.
 	 */
 	public void insert(T item, double priority) {
-
+		Node lmao = new Node(item, priority);
+		if (contents.size() == 0) {
+			contents.add(null);
+			contents.add(lmao);
+			return;
+		}
+		contents.add(lmao);
+		bubbleUp(contents.size() - 1);
 	}
 
 	/**
@@ -20,8 +28,8 @@ public class ArrayHeap<T> {
 	 * from the heap.
 	 */
 	public Node peek() {
-		// TODO Complete this method!
-		return null;
+		// We want the smallest item, which will always be the 1 item
+		return contents.get(1);
 	}
 
 	/**
@@ -29,8 +37,21 @@ public class ArrayHeap<T> {
 	 * the heap. This is dequeue, or poll.
 	 */
 	public Node removeMin() {
-		// TODO Complete this method!
-		return null;
+		if (contents.size() == 0) {
+			return null;
+		}
+		if (contents.size() == 1) {
+			return null;
+		}
+		if (contents.size() == 2) {
+			return contents.remove(1);
+		}
+		// Swap the top and bottom items
+		swap(1, contents.size() - 1);
+		// Remove the new bottom item (old top item)
+		Node removed = contents.remove(contents.size() - 1);
+		bubbleDown(1);
+		return removed;
 	}
 
 	/**
@@ -39,7 +60,22 @@ public class ArrayHeap<T> {
 	 * nodes with the same item. Check for item equality with .equals(), not ==
 	 */
 	public void changePriority(T item, double priority) {
-		// TODO Complete this method!
+		ListIterator<Node> iterator = contents.listIterator(1);
+		while (iterator.hasNext()) {
+			Node inspect = iterator.next();
+			T inspectItem = inspect.item();
+			double inspectPriority = inspect.priority();
+			if (item.equals(inspectItem)) {
+				iterator.set(new Node(item, priority));
+				if (priority > inspectPriority) {
+					bubbleDown(iterator.previousIndex());
+				} else if (priority < inspectPriority) {
+					bubbleUp(iterator.previousIndex());
+				}
+				return;
+			}
+		}
+		return;
 	}
 
 	/**
@@ -102,52 +138,88 @@ public class ArrayHeap<T> {
 	 * Returns the index of the node to the left of the node at i.
 	 */
 	private int getLeftOf(int i) {
-		// TODO Complete this method!
-		return 0;
+		return 2 * i;
 	}
 
 	/**
 	 * Returns the index of the node to the right of the node at i.
 	 */
 	private int getRightOf(int i) {
-		// TODO Complete this method!
-		return 0;
+		return (2 * i) + 1;
 	}
 
 	/**
 	 * Returns the index of the node that is the parent of the node at i.
 	 */
 	private int getParentOf(int i) {
-		// TODO Complete this method!
-		return 0;
+		return i / 2;
 	}
 
 	/**
 	 * Adds the given node as a left child of the node at the given index.
 	 */
 	private void setLeft(int index, Node n) {
-		// TODO Complete this method!
+		setNode(2 * index, n);
 	}
 
 	/**
 	 * Adds the given node as the right child of the node at the given index.
 	 */
-	private void setRight(int inde, Node n) {
-		// TODO Complete this method!
+	private void setRight(int index, Node n) {
+		setNode((2 * index) + 1, n);
 	}
 
 	/**
 	 * Bubbles up the node currently at the given index.
 	 */
 	private void bubbleUp(int index) {
-		// TODO Complete this method!
+		if (index == 1) {
+			return;
+		}
+		Node active = contents.get(index);
+		Node parent = contents.get(index / 2);
+		if (active.priority() < parent.priority()) {
+			swap(index, index / 2);
+			bubbleUp(index / 2);
+			return;
+		} else {
+			return;
+		}
 	}
 
 	/**
 	 * Bubbles down the node currently at the given index.
 	 */
-	private void bubbleDown(int inex) {
-		// TODO Complete this method!
+	private void bubbleDown(int index) {
+		Node active = contents.get(index);
+		
+		if (getNode(getLeftOf(index)) == null && getNode(getRightOf(index)) == null) {
+			return;
+		}
+		if (getNode(getLeftOf(index)) == null) {
+			Node child = getNode(getRightOf(index));
+			if (child.priority() < active.priority()) {
+				swap(index, getRightOf(index));
+				bubbleDown(getRightOf(index));
+				return;
+			} else {
+				return;
+			}
+		}
+		if (getNode(getRightOf(index)) == null) {
+			Node child = getNode(getLeftOf(index));
+			if (child.priority() < active.priority()) {
+				swap(index, getLeftOf(index));
+				bubbleDown(getLeftOf(index));
+				return;
+			} else {
+				return;
+			}
+		}
+		int smaller = min(getRightOf(index), getLeftOf(index));
+		swap(index, smaller);
+		bubbleDown(smaller);
+		return;
 	}
 
 	/**

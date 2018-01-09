@@ -4,7 +4,7 @@ public class MagicWord11 {
         *  if you are submitting early */
 
         /* Due to late release, the magic word is: bean */
-        String magicWord = "bean";
+        String magicWord = "early";
         return magicWord;
     }
 } 

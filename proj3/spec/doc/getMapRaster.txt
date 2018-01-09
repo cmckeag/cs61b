@@ -1,0 +1,27 @@
+Quad tree is an array
+Root is 1
+Each child is 4x-2 : 4x-1 : 4x : 4x+1 in the array
+Each level of the tree corresponds to a level of zoom
+
+Nodes:
+string imageName "1", "311", "44411"
+4 coordinates, 1 for each corner (store in Iterable so we can easily check if any coordinates are in the query window)
+1 integer for width of tile
+1 integer for zoom level of tile (root = 0)
+
+We can determine the minimum zoom level we want based on the query window size and the total size of a given level of the quad tree. When we have our zoom level, we can iterate through the corresponding part of the array, and only look at 4^Z objects, where Z is the zoom level. And at each node check if it is inside of the query window.
+
+public (return) findNodes(query window coordinates) {
+	First find the appropriate level.
+		queryBound = max(queryWindowWidth, queryWindowHeight) (query window may not be square)
+		find smallest N such that 256 * 2^N > queryBound
+		N is the level.
+	Given N, we can determine the index of the array where all Nodes at that level start
+		If N is the level, use geometric series, summing 4^k, from k=0 to k=N-1. Need a special case for N=0, in which we return 1.
+		index = SUM(k=0, k=N-1) 4^k   +    1 (have to add 1 to get to the next location)
+	Iterate 4^N times through the array starting at the given index.
+		Each level contains 4^N items, listed in order in the array.
+	At each Node, determine if the Node is inside the query window.
+		For each corner of the tile, determine if the x coordinate is inside the x-range of queryWindow, and if the y coordinate is inside the y-range of the queryWindow. If this is true for at least one corner, then it is inside the queryWindow, and some boolean should be set to true.
+	For each Node inside the query window, add it to the output stream.
+}
